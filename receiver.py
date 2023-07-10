@@ -99,49 +99,58 @@ class Receiver:
         processed_prompts = []
         for i in self.df.index:
             if self.df.loc[i].is_downloaded == 0:
-                response = requests.get(self.df.loc[i].url)
-                with open(os.path.join(self.local_path, self.df.loc[i].filename), "wb") as req:
-                    req.write(response.content)
 
-                    # Example usage
-                    image_path = self.df.loc[i].filename  # Replace with your image path
-                    base_name = self.df.loc[i].filename  # Replace with your desired base name
-                    cut_square_image(image_path, base_name)
+                file_path = 'processed.txt'
+                image_url = self.df.loc[i].filename
+                contains_image_url = check_image_url(file_path, image_url)
+                if contains_image_url:
+                    print("The file contains the provided image URL.")
+                else:
+                    response = requests.get(self.df.loc[i].url)
+                    with open(os.path.join(self.local_path, self.df.loc[i].filename), "wb") as req:
+                        req.write(response.content)
 
-                    filename = image_path
-                    extracted_string = filename[9:-41]
+                        # Example usage
+                        image_path = self.df.loc[i].filename  # Replace with your image path
+                        base_name = self.df.loc[i].filename  # Replace with your desired base name
+                        cut_square_image(image_path, base_name)
 
-                    print(extracted_string)
+                        filename = image_path
+                        extracted_string = filename[9:-41]
 
-                    story_doc = get_document_by_field('stories', 'proc_id', extracted_string, db)
+                        print(extracted_string)
 
-                    desired_value = extracted_string
-                    directory = 'crops/'
-                    uploaded_urls = []
+                        story_doc = get_document_by_field('stories', 'proc_id', extracted_string, db)
 
-                    for filename in os.listdir(directory):
-                        if desired_value in filename:
-                            file_path = os.path.join(directory, filename)
-                            blob = bucket.blob(filename)
-                            blob.upload_from_filename(file_path)
-                            blob.make_public()
-                            url = blob.public_url
-                            uploaded_urls.append(url)
+                        desired_value = extracted_string
+                        directory = 'crops/'
+                        uploaded_urls = []
 
-                    inc = 8
+                        for filename in os.listdir(directory):
+                            if desired_value in filename:
+                                file_path = os.path.join(directory, filename)
+                                blob = bucket.blob(filename)
+                                blob.upload_from_filename(file_path)
+                                blob.make_public()
+                                url = blob.public_url
+                                uploaded_urls.append(url)
 
-                    for file in uploaded_urls:
-                        referenced_document_ref = db.collection('stories').document(story_doc.id)
-                        document_data = {
-                            'image_url': file,
-                            'story': referenced_document_ref,
-                            'order': inc
-                        }
-                        inc += 1
+                        inc = 8
 
-                        collection_ref = db.collection('slide')
-                        new_document_ref = collection_ref.document()
-                        new_document_ref.set(document_data)
+                        for file in uploaded_urls:
+                            referenced_document_ref = db.collection('stories').document(story_doc.id)
+                            document_data = {
+                                'image_url': file,
+                                'story': referenced_document_ref,
+                                'order': inc
+                            }
+                            inc += 1
+
+                            collection_ref = db.collection('slide')
+                            new_document_ref = collection_ref.document()
+                            new_document_ref.set(document_data)
+
+                        referenced_document_ref.update({"in_review": False})
 
                 self.df.loc[i, 'is_downloaded'] = 1
                 processed_prompts.append(self.df.loc[i].prompt)
@@ -167,7 +176,7 @@ class Receiver:
                 self.collecting_results()
                 self.outputer()
                 self.downloading_results(db=db, bucket=bucket)
-                time.sleep(15)
+                time.sleep(30)
             except Exception as e:
                 print(e)
 
@@ -178,6 +187,21 @@ def parse_args(args):
     parser.add_argument('--local_path', help='Path to output images', required=True)
 
     return parser.parse_args(args)
+
+
+def check_image_url(file_path, image_url):
+    found = False
+    with open(file_path, 'r+') as file:
+        lines = file.readlines()
+        for line in lines:
+            if image_url in line:
+                found = True
+                break
+
+        if not found:
+            file.write(image_url + '\n')
+
+    return found
 
 
 def cut_square_image(image_path, base_name):
@@ -235,10 +259,10 @@ def get_document_by_field(collection_name, field_name, field_value, db):
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    args = parse_args(args)
-    params = args.params
-    local_path = args.local_path  # '/Users/georgeb/discord_api/images/'
+    # args = sys.argv[1:]
+    # args = parse_args(args)
+    params = os.path.abspath(os.getcwd()) + '/sender_params.json'
+    local_path = os.path.abspath(os.getcwd()) + '/download'
 
     print('=========== listening started ===========')
     receiver = Receiver(params, local_path)

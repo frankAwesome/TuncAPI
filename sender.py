@@ -1,11 +1,6 @@
 import requests
 import json
 import time
-import re
-import argparse
-import sys
-
-import base64
 import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
@@ -43,11 +38,6 @@ class Sender:
         header = {
             'authorization': self.authorization
         }
-        
-        # prompt = prompt.replace('_', ' ')
-        # prompt = " ".join(prompt.split())
-        # prompt = re.sub(r'[^a-zA-Z0-9\s]+', '', prompt)
-        # prompt = prompt.lower()
 
         payload = {'type': 2, 
         'application_id': self.application_id,
@@ -85,16 +75,7 @@ cors = CORS(app, resource={
 @cross_origin()
 def imagine():
     try:
-        # record = json.loads(request.data)
-        # record = request.data
-        # img_data = base64.b64decode(record)
-
-        # output = remove(img_data)
-        # result_base64 = base64.b64encode(output)
-
-        # args = sys.argv[1:]
-        # args = parse_args(args)
-        params = '/Users/francois/Documents/MidJAPI/sender_params.json'
+        params = os.path.abspath(os.getcwd()) + '/sender_params.json'
         prompt = json.loads(request.data)
 
         body_prompt = prompt['prompt']
@@ -105,15 +86,8 @@ def imagine():
 
         body_prompt += ' ' + uid
 
-        # update firebase
-        # Assuming your document reference is stored in a variable called `doc_ref`
         doc_ref = db.collection('stories').document(story_ref)
-
-        # Update the "proc_id" field
         doc_ref.update({"proc_id": body_prompt.replace(" ", "_")})
-
-
-        # prompt = str(request.data)
 
         sender = Sender(params)
         response = sender.send(image_url + ' ' + body_prompt)
@@ -132,7 +106,7 @@ firebase_admin.initialize_app(cred)
 # Create a Firestore client
 db = firestore.client()
 
-cert = os.path.abspath(os.getcwd()) + '/server.crt'
-key = os.path.abspath(os.getcwd()) + '/server.key'
+# cert = os.path.abspath(os.getcwd()) + '/server.crt'
+# key = os.path.abspath(os.getcwd()) + '/server.key'
 # app.run( host='0.0.0.0', port=5000, ssl_context=(cert, key))
 app.run( host='0.0.0.0', port=5000)
