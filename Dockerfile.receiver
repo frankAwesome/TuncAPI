@@ -1,0 +1,22 @@
+FROM python:3.9
+
+WORKDIR /
+
+COPY /receiver.py receiver.py
+COPY /processed.txt processed.txt
+COPY /sender_params.json sender_params.json
+
+RUN mkdir -p /download/
+RUN mkdir -p /crops/
+RUN mkdir -p /config/
+COPY /config/ /config/
+
+ENV AUTHTOKEN=NjMwNzYxMzIwMjA3MDg5NzA1.Gpj4c_.AAbazTOR63FxVGPBj9Mr0qbvG4U-Ia0MBITUjs
+
+RUN pip install --upgrade pip
+RUN pip install Pillow
+RUN pip install firebase-admin
+RUN pip install pandas
+RUN pip install requests
+
+CMD [ "python", "receiver.py" ]

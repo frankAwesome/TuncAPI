@@ -27,6 +27,7 @@ class Sender:
         self.channelid=params['channelid']
         self.authorization=params['authorization']
         self.application_id = params['application_id']
+        self.authorization = os.getenv('AUTHTOKEN','NjMwNzYxMzIwMjA3MDg5NzA1.GoqmY4.vtUQs3u22uSV1hgGCasMzRsXXEqzCrtoT2w5MA')
         self.guild_id = params['guild_id']
         self.session_id = params['session_id']
         self.version = params['version']
@@ -84,10 +85,10 @@ def imagine():
 
         uid = story_ref[:-15]
 
-        body_prompt += ' ' + uid
+        body_prompt = uid + ' ' + body_prompt
 
         doc_ref = db.collection('stories').document(story_ref)
-        doc_ref.update({"proc_id": body_prompt.replace(" ", "_")})
+        doc_ref.update({"proc_id": uid})
 
         sender = Sender(params)
         response = sender.send(image_url + ' ' + body_prompt)

@@ -1,0 +1,27 @@
+FROM python:3.9
+
+WORKDIR /
+
+COPY /sender.py sender.py
+COPY /processed.txt processed.txt
+COPY /sender_params.json sender_params.json
+
+RUN mkdir -p /download/
+RUN mkdir -p /crops/
+RUN mkdir -p /config/
+COPY /config/ /config/
+
+ENV AUTHTOKEN=NjMwNzYxMzIwMjA3MDg5NzA1.Gpj4c_.AAbazTOR63FxVGPBj9Mr0qbvG4U-Ia0MBITUjs
+
+RUN pip install --upgrade pip
+RUN pip install -U Flask
+RUN pip install -U flask-cors
+RUN pip install numpy
+RUN pip install Pillow
+RUN pip install firebase-admin
+RUN pip install pandas
+RUN pip install requests
+
+EXPOSE 5000
+
+CMD [ "python", "sender.py" ]

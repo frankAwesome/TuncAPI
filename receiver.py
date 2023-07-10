@@ -1,14 +1,9 @@
 import requests
 import json
-import numpy as np
 import time
 import pandas as pd
 import os
-import re
 from datetime import datetime
-import glob
-import argparse
-import sys
 from PIL import Image
 
 import firebase_admin
@@ -38,12 +33,14 @@ class Receiver:
             params = json.load(json_file)
 
         self.channelid = params['channelid']
-        self.authorization = params['authorization']
+        # self.authorization = params['authorization']
+        self.authorization = os.getenv('AUTHTOKEN','NjMwNzYxMzIwMjA3MDg5NzA1.GoqmY4.vtUQs3u22uSV1hgGCasMzRsXXEqzCrtoT2w5MA')
         self.headers = {'authorization': self.authorization}
 
     def retrieve_messages(self):
         r = requests.get(
             f'https://discord.com/api/v10/channels/{self.channelid}/messages?limit={100}', headers=self.headers)
+        print(r)
         jsonn = json.loads(r.text)
         return jsonn
 
@@ -116,7 +113,7 @@ class Receiver:
                         cut_square_image(image_path, base_name)
 
                         filename = image_path
-                        extracted_string = filename[9:-41]
+                        extracted_string = filename[9:14]
 
                         print(extracted_string)
 
@@ -181,13 +178,6 @@ class Receiver:
                 print(e)
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--params', help='Path to discord authorization and channel parameters', required=True)
-    parser.add_argument('--local_path', help='Path to output images', required=True)
-
-    return parser.parse_args(args)
-
 
 def check_image_url(file_path, image_url):
     found = False
@@ -207,7 +197,7 @@ def check_image_url(file_path, image_url):
 def cut_square_image(image_path, base_name):
     # Open the image
 
-    img = Image.open('/Users/francois/Documents/MidJAPI/download/' + image_path)
+    img = Image.open(os.path.abspath(os.getcwd()) + '/download/' + image_path)
 
     # Ensure the image is square
     width, height = img.size
